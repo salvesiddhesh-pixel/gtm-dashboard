@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Daily Log — GTM Team</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0f172a;
+    --accent: #3b82f6;
+    --green: #22c55e;
+    --red: #ef4444;
+    --border: #e2e8f0;
+    --muted: #64748b;
+    --surface: #f8fafc;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--surface);
+    color: var(--navy);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  .header {
+    background: var(--navy);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-title { font-size: 16px; font-weight: 700; }
+  .header-sub { font-size: 12px; color: #94a3b8; margin-top: 1px; }
+
+  .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .card-label {
+    padding: 12px 16px 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .card-body { padding: 12px 16px 16px; }
+
+  /* Name selector */
+  .name-select {
+    width: 100%;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--navy);
+    border: none;
+    padding: 8px 0;
+    background: transparent;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    padding-right: 28px;
+  }
+  .name-select:focus { outline: none; }
+
+  /* Date input */
+  .date-input {
+    width: 100%;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    padding: 8px 0;
+    background: transparent;
+    color: var(--navy);
+    cursor: pointer;
+  }
+  .date-input:focus { outline: none; }
+
+  /* Stepper */
+  .metric-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .metric-item { }
+  .metric-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .stepper {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .stepper-btn {
+    width: 44px;
+    height: 52px;
+    font-size: 22px;
+    font-weight: 300;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stepper-btn:active { background: var(--border); }
+  .stepper-val {
+    flex: 1;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 800;
+    border: none;
+    background: transparent;
+    color: var(--navy);
+    width: 100%;
+    padding: 0;
+  }
+  .stepper-val:focus { outline: none; }
+
+  /* Notes */
+  .notes-input {
+    width: 100%;
+    border: none;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--navy);
+    resize: none;
+    min-height: 80px;
+    background: transparent;
+    padding: 8px 0;
+    line-height: 1.5;
+  }
+  .notes-input:focus { outline: none; }
+  .notes-input::placeholder { color: #cbd5e1; }
+
+  /* Submit */
+  .submit-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--accent);
+    color: white;
+    font-size: 17px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    margin-top: 4px;
+  }
+  .submit-btn:active { transform: scale(0.98); background: #2563eb; }
+  .submit-btn:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
+
+  /* Success */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 48px 20px;
+  }
+  .success-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+  .success-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+  .success-summary {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    text-align: left;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { color: var(--muted); }
+  .summary-val { font-weight: 700; }
+  .log-again-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--navy);
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Loading / Error */
+  .status-bar {
+    background: var(--navy);
+    color: #94a3b8;
+    font-size: 12px;
+    padding: 6px 16px;
+    text-align: center;
+  }
+  .status-bar.error { background: #fef2f2; color: var(--red); }
+  .status-bar.ok { background: #f0fdf4; color: #15803d; }
+
+  .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* No SDRs state */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .empty-state p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Daily Activity Log</div>
+    <div class="header-sub" id="headerDate"></div>
+  </div>
+</div>
+
+<!-- Status bar -->
+<div class="status-bar" id="statusBar">Connecting...</div>
+
+<!-- Loading -->
+<div class="loading-state" id="loadingState">Loading your team...</div>
+
+<!-- Form -->
+<div class="container" id="formContainer" style="display:none">
+
+  <!-- Success screen (hidden by default) -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Logged!</div>
+    <div class="success-sub" id="successMsg"></div>
+    <div class="success-summary" id="successSummary"></div>
+    <button class="log-again-btn" onclick="resetForm()">Log another day</button>
+  </div>
+
+  <!-- The form -->
+  <div id="theForm">
+
+    <!-- Name -->
+    <div class="card">
+      <div class="card-label">Your Name</div>
+      <div class="card-body">
+        <select class="name-select" id="sdrSelect">
+          <option value="">— Pick your name —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Date -->
+    <div class="card">
+      <div class="card-label">Date</div>
+      <div class="card-body">
+        <input type="date" class="date-input" id="logDate">
+      </div>
+    </div>
+
+    <!-- Activity numbers -->
+    <div class="card">
+      <div class="card-label">Activity</div>
+      <div class="card-body">
+        <div class="metric-row">
+          <div class="metric-item">
+            <div class="metric-label">📞 Calls Made</div>
+            <div class="stepper">
+              <button class="stepper-btn" onclick="change('calls', -1)">−</button>
+              <input class="stepper-val" type="number" id="calls" value="0" min="0">
+              <button class="stepper-btn" onclick="change('calls', 1)">+</button>
+            </div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">✉️ Emails Sent</div>
+            <div class="stepper">
+              <button class="stepper-btn" onclick="change('emails', -1)">−</button>
+              <input class="stepper-val" type="number" id="emails" value="0" min="0">
+              <button class="stepper-btn" onclick="change('emails', 1)">+</button>
+            </div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">🔗 LinkedIn</div>
+            <div class="stepper">
+              <button class="stepper-btn" onclick="change('linkedin', -1)">−</button>
+              <input class="stepper-val" type="number" id="linkedin" value="0" min="0">
+              <button class="stepper-btn" onclick="change('linkedin', 1)">+</button>
+            </div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">🗓 Meetings Booked</div>
+            <div class="stepper">
+              <button class="stepper-btn" onclick="change('meetings', -1)">−</button>
+              <input class="stepper-val" type="number" id="meetings" value="0" min="0">
+              <button class="stepper-btn" onclick="change('meetings', 1)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card">
+      <div class="card-label">Notes / Blockers (optional)</div>
+      <div class="card-body">
+        <textarea class="notes-input" id="notes" placeholder="Any blockers? Good conversations? Anything your manager should know?"></textarea>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitLog()">Submit Daily Log</button>
+
+  </div><!-- /theForm -->
+</div><!-- /container -->
+
+<!-- ======================================================
+     STEP 1: PASTE YOUR FIREBASE CONFIG BELOW
+     Replace the placeholder values with your actual config.
+     You get this from: Firebase Console → Project Settings → Your apps → SDK setup
+     ====================================================== -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCaHWfo72RtuUk9_ufESI2D4F3j97-f38o",
+  authDomain: "gtm-dashboard-6540c.firebaseapp.com",
+  projectId: "gtm-dashboard-6540c",
+  storageBucket: "gtm-dashboard-6540c.firebasestorage.app",
+  messagingSenderId: "730130493443",
+  appId: "1:730130493443:web:9eb045d02065a14e975e36"
+};
+// ======================================================
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ===== HELPERS =====
+function today() { return new Date().toISOString().split('T')[0]; }
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+}
+
+function setStatus(msg, type) {
+  const bar = document.getElementById('statusBar');
+  bar.textContent = msg;
+  bar.className = 'status-bar ' + (type || '');
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('headerDate').textContent = fmtDate(today());
+  document.getElementById('logDate').value = today();
+
+  if (firebaseConfig.apiKey === 'PASTE_API_KEY_HERE') {
+    setStatus('⚠ Firebase not configured yet — open this file and paste your config', 'error');
+    document.getElementById('loadingState').textContent = 'Waiting for Firebase config.';
+    return;
+  }
+
+  loadSDRs();
+});
+
+function loadSDRs() {
+  db.collection('sdrs').orderBy('name').onSnapshot(snapshot => {
+    const sel = document.getElementById('sdrSelect');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Pick your name —</option>';
+    snapshot.forEach(doc => {
+      const opt = document.createElement('option');
+      opt.value = doc.id;
+      opt.textContent = doc.data().name;
+      sel.appendChild(opt);
+    });
+    if (current) sel.value = current;
+
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('formContainer').style.display = 'block';
+
+    if (snapshot.empty) {
+      setStatus('No team members found — ask your manager to add you to the system first.', 'error');
+    } else {
+      setStatus('Connected ✓', 'ok');
+    }
+  }, err => {
+    setStatus('Connection error: ' + err.message, 'error');
+    document.getElementById('loadingState').textContent = 'Could not connect. Check your Firebase config.';
+  });
+}
+
+// ===== STEPPER =====
+function change(field, delta) {
+  const el = document.getElementById(field);
+  const val = Math.max(0, (parseInt(el.value) || 0) + delta);
+  el.value = val;
+}
+
+// ===== SUBMIT =====
+async function submitLog() {
+  const sdrId = document.getElementById('sdrSelect').value;
+  const sdrName = document.getElementById('sdrSelect').options[document.getElementById('sdrSelect').selectedIndex]?.text;
+  const date = document.getElementById('logDate').value;
+
+  if (!sdrId) { alert('Please pick your name.'); return; }
+  if (!date) { alert('Please select a date.'); return; }
+
+  const calls    = parseInt(document.getElementById('calls').value) || 0;
+  const emails   = parseInt(document.getElementById('emails').value) || 0;
+  const linkedin = parseInt(document.getElementById('linkedin').value) || 0;
+  const meetings = parseInt(document.getElementById('meetings').value) || 0;
+  const notes    = document.getElementById('notes').value.trim();
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  try {
+    await db.collection('logs').add({
+      sdrId, sdrName, date, calls, emails, linkedin, meetings, notes,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showSuccess({ sdrName, date, calls, emails, linkedin, meetings, notes });
+  } catch (e) {
+    alert('Submit failed: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = 'Submit Daily Log';
+  }
+}
+
+function showSuccess({ sdrName, date, calls, emails, linkedin, meetings, notes }) {
+  document.getElementById('theForm').style.display = 'none';
+  const s = document.getElementById('successScreen');
+  s.style.display = 'block';
+  document.getElementById('successMsg').textContent = `${sdrName} · ${fmtDate(date)}`;
+  document.getElementById('successSummary').innerHTML = `
+    <div class="summary-row"><span class="summary-label">📞 Calls Made</span><span class="summary-val">${calls}</span></div>
+    <div class="summary-row"><span class="summary-label">✉️ Emails Sent</span><span class="summary-val">${emails}</span></div>
+    <div class="summary-row"><span class="summary-label">🔗 LinkedIn</span><span class="summary-val">${linkedin}</span></div>
+    <div class="summary-row"><span class="summary-label">🗓 Meetings Booked</span><span class="summary-val">${meetings}</span></div>
+    ${notes ? `<div class="summary-row"><span class="summary-label">Notes</span><span class="summary-val" style="font-weight:400;color:#475569;max-width:60%;text-align:right">${notes}</span></div>` : ''}
+  `;
+}
+
+function resetForm() {
+  document.getElementById('successScreen').style.display = 'none';
+  document.getElementById('theForm').style.display = 'block';
+  ['calls','emails','linkedin','meetings'].forEach(f => document.getElementById(f).value = 0);
+  document.getElementById('notes').value = '';
+  document.getElementById('logDate').value = today();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = false;
+  btn.textContent = 'Submit Daily Log';
+}
+</script>
+</body>
+</html>
